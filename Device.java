@@ -1,6 +1,6 @@
 package osp.Devices;
 
-/**
+/*
     This class stores all pertinent information about a device in
     the device table.  This class should be sub-classed by all
     device classes, such as the Disk class.
@@ -19,7 +19,7 @@ import java.util.*;
 
 public class Device extends IflDevice
 {
-    /**
+    /*
         This constructor initializes a device with the provided parameters.
 	As a first statement it must have the following:
 
@@ -31,11 +31,12 @@ public class Device extends IflDevice
     */
     public Device(int id, int numberOfBlocks)
     {
-        // your code goes here
+        super(id, numberOfBlocks);
+        iorbQueue = new GenericList();
 
     }
 
-    /**
+    /*
        This method is called once at the beginning of the
        simulation. Can be used to initialize static variables.
 
@@ -47,7 +48,7 @@ public class Device extends IflDevice
 
     }
 
-    /**
+    /*
        Enqueues the IORB to the IORB queue for this device
        according to some kind of scheduling algorithm.
        
@@ -65,12 +66,51 @@ public class Device extends IflDevice
        @OSPProject Devices
     */
     public int do_enqueueIORB(IORB iorb)
-    {
-        // your code goes here
+    {     
+          //lock the page associated with the iorb
+          iorb.getPage().lock();
+
+          //increment iorb count
+          iorb.getOpenFile().incrementIORBCount();
+
+          //Compute Cylinder
+          int addBits = MMU.getVirtualAddressBits();
+          int pageBits = MMU.getPageAddressBits();
+          int offsetBits = addBits - pageBits;
+          int blockSize = (int)Math.pow(2,offsetBits); //Disk block size is equal to page size
+          int sectorsPerBlock = blockSize/this.getBytesPerSector();
+          int blocksPerTrack = this.getSectorsPerTrack()/sectorsPerBlock;
+          int tracksPerCylinder = this.getPlatters();
+          int blockNumber = iorb.getBlockNumber();
+          int cylinder = blockNumber/(blocksPerTrack*tracksPerCylinder);
+
+          iorb.setCylinder(cylinder);
+
+          int threadStatus = iorb.getThread().getStatus();
+
+          if(threadStatus == ThreadKill)
+               return FAILURE;
+
+          //Thread is alive
+          //Device is idle
+          if(!this.isBusy()){
+
+               this.startIO(iorb);
+               return SUCCESS;
+          }
+          //Device is busy
+          else{
+
+
+          }
+
+
+
+
 
     }
 
-    /**
+    /*
        Selects an IORB (according to some scheduling strategy)
        and dequeues it from the IORB queue.
 
@@ -82,7 +122,7 @@ public class Device extends IflDevice
 
     }
 
-    /**
+    /*
         Remove all IORBs that belong to the given ThreadCB from 
 	this device's IORB queue
 
