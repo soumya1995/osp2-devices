@@ -1,3 +1,13 @@
+/*
+Name: Soumya Das
+SB Id#: 110532374
+
+I pledge my honor that all parts of this project were done by me individ-
+ually, without collaboration with anyone, and without consulting external
+sources that help with similar projects.
+
+*/
+
 package osp.Devices;
 
 /*
@@ -29,10 +39,19 @@ public class Device extends IflDevice
 
         @OSPProject Devices
     */
+
+      GenericQueueInterface insertQueue =  null;
+      GenericQueueInterface removeQueue = null;
+
     public Device(int id, int numberOfBlocks)
     {
         super(id, numberOfBlocks);
         iorbQueue = new GenericList();
+
+        //Create the first queue append it to the list of queue
+        GenericQueueInterface queue = new GenericList();
+        (GenericList)iorbQueue.append(queue);
+        insertQueue = queue;
 
     }
 
@@ -93,20 +112,13 @@ public class Device extends IflDevice
 
           //Thread is alive
           //Device is idle
-          if(!this.isBusy()){
-
+          if(!this.isBusy())
                this.startIO(iorb);
-               return SUCCESS;
-          }
           //Device is busy
-          else{
+          else
+               (GenericList)insertQueue.append(iorb);
 
-
-          }
-
-
-
-
+           return SUCCESS;
 
     }
 

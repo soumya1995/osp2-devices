@@ -1,3 +1,13 @@
+/*
+Name: Soumya Das
+SB Id#: 110532374
+
+I pledge my honor that all parts of this project were done by me individ-
+ually, without collaboration with anyone, and without consulting external
+sources that help with similar projects.
+
+*/
+
 package osp.Devices;
 import java.util.*;
 import osp.IFLModules.*;
@@ -9,7 +19,7 @@ import osp.Tasks.*;
 import osp.Memory.*;
 import osp.FileSys.*;
 
-/**
+/*
     The disk interrupt handler.  When a disk I/O interrupt occurs,
     this class is called upon the handle the interrupt.
 
@@ -17,7 +27,7 @@ import osp.FileSys.*;
 */
 public class DiskInterruptHandler extends IflDiskInterruptHandler
 {
-    /** 
+    /* 
         Handles disk interrupts. 
         
         This method obtains the interrupt parameters from the 
