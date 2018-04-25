@@ -40,8 +40,11 @@ public class Device extends IflDevice
         @OSPProject Devices
     */
 
-      GenericQueueInterface insertQueue =  null;
-      GenericQueueInterface removeQueue = null;
+      private GenericQueueInterface insertQueue =  null;
+      private GenericQueueInterface removeQueue = null;
+      private boolean isFirstElement = true; //This would be for the first time the do_dequeue() is run
+      private static int prevCylinder = 0;
+
 
     public Device(int id, int numberOfBlocks)
     {
@@ -52,6 +55,7 @@ public class Device extends IflDevice
         GenericQueueInterface queue = new GenericList();
         (GenericList)iorbQueue.append(queue);
         insertQueue = queue;
+        removeQueue = queue;
 
     }
 
@@ -130,7 +134,50 @@ public class Device extends IflDevice
     */
     public IORB do_dequeueIORB()
     {
-        // your code goes here
+        
+        IORB iorb = SSTF();
+
+        //Dequeuing for the first time
+        if(isFirstElement == true && iorb != null){
+
+          isFirstElement = false;
+          //Create a new queue append it to the list of queue
+          GenericQueueInterface queue = new GenericList();
+          (GenericList)iorbQueue.append(queue);
+          insertQueue = queue;   
+        }
+
+        //Dequeuing the element left in a list
+        if(iorb != null && removeQueue.isEmpty()){
+
+          iorbQueue.removeHead();
+          removeQueue = iorbQueue.getHead();
+          //Create a new queue append it to the list of queue
+          GenericQueueInterface queue = new GenericList();
+          (GenericList)iorbQueue.append(queue);
+          insertQueue = queue;   
+        }
+
+        return iorb;
+          
+    }
+
+    private IORB SSTF(){
+
+     if(removeQueue.isEmpty())
+          return null;
+
+     IORB minIorb = (IORB)((GenericList)removeQueue).getHead();
+     Enumeration list = removeQueue.forwardIterator();
+     while(list.hasMoreElements()){
+
+          IORB iorb = (IORB)list.nextElement();
+          if(Math.abs(iorb.getCylinder()- prevCylinder) < Math.abs(minIorb.getCylinder()-prevCylinder))
+               minIorb = iorb;    
+     }
+
+     prevCylinder = minIorb.getCylinder();
+     return (IORB)removeQueue.remove(minIorb);
 
     }
 
