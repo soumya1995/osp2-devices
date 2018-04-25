@@ -196,7 +196,36 @@ public class Device extends IflDevice
     */
     public void do_cancelPendingIO(ThreadCB thread)
     {
-        // your code goes here
+        if(thread == null)
+          return;
+
+        Enumeration list = insertQueue.forwardIterator();
+        while(list.hasMoreElements()){
+
+          IORB iorb = (IORB)list.nextElement();
+          if(iorb.getThread().equals(thread)){
+
+               iorb.getPage().unlock();
+               OpenFile openFile = iorb.getOpenFile();
+               openFile.decrementIORBCount();
+               if(openFile.getIORBCount() == 0 && openFile.closePending)
+                    openFile.close();
+          }
+     }
+
+     list = removeQueue.forwardIterator();
+        while(list.hasMoreElements()){
+
+          IORB iorb = (IORB)list.nextElement();
+          if(iorb.getThread().equals(thread)){
+
+               iorb.getPage().unlock();
+               OpenFile openFile = iorb.getOpenFile();
+               openFile.decrementIORBCount();
+               if(openFile.getIORBCount() == 0 && openFile.closePending == true)
+                    openFile.close();
+          }
+     }
 
     }
 
