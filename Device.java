@@ -199,31 +199,35 @@ public class Device extends IflDevice
         if(thread == null)
           return;
 
-        Enumeration list = insertQueue.forwardIterator();
-        while(list.hasMoreElements()){
+        if(!insertQueue.isEmpty()){
+          Enumeration list = insertQueue.forwardIterator();
+          while(list.hasMoreElements()){
 
-          IORB iorb = (IORB)list.nextElement();
-          if(iorb.getThread().equals(thread)){
+               IORB iorb = (IORB)list.nextElement();
+               if(iorb.getThread().equals(thread)){
 
-               iorb.getPage().unlock();
-               OpenFile openFile = iorb.getOpenFile();
-               openFile.decrementIORBCount();
-               if(openFile.getIORBCount() == 0 && openFile.closePending)
-                    openFile.close();
+                    iorb.getPage().unlock();
+                    OpenFile openFile = iorb.getOpenFile();
+                    openFile.decrementIORBCount();
+                    if(openFile.getIORBCount() == 0 && openFile.closePending)
+                         openFile.close();
+               }
           }
      }
 
-     list = removeQueue.forwardIterator();
-        while(list.hasMoreElements()){
+     if(!removeQueue.isEmpty()){
+          list = removeQueue.forwardIterator();
+          while(list.hasMoreElements()){
 
-          IORB iorb = (IORB)list.nextElement();
-          if(iorb.getThread().equals(thread)){
+               IORB iorb = (IORB)list.nextElement();
+               if(iorb.getThread().equals(thread)){
 
-               iorb.getPage().unlock();
-               OpenFile openFile = iorb.getOpenFile();
-               openFile.decrementIORBCount();
-               if(openFile.getIORBCount() == 0 && openFile.closePending == true)
-                    openFile.close();
+                    iorb.getPage().unlock();
+                    OpenFile openFile = iorb.getOpenFile();
+                    openFile.decrementIORBCount();
+                    if(openFile.getIORBCount() == 0 && openFile.closePending == true)
+                         openFile.close();
+               }
           }
      }
 
