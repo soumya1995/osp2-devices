@@ -1,0 +1,26 @@
+Double Queue and SSTF:
+
+Total number of cylinders swept(Device 0) = 5507
+Total number of cylinders swept(Device 1) = 145
+Total number of cylinders swept(Device 2) = 36
+Average number of cylinders swept per disk access(Device 0) = 3
+Average number of cylinders swept per disk access(Device 1) = 2
+Average number of cylinders swept per disk access(Device 2) = 2
+Service time per I/O request(Device 0): 864
+Service time per I/O request(Device 1): 243
+Service time per I/O request(Device 2): 854
+
+FIFO:
+
+Total number of cylinders swept(Device 0) = 11993
+Total number of cylinders swept(Device 1) = 97
+Total number of cylinders swept(Device 2) = 17
+Average number of cylinders swept per disk access(Device 0) = 7
+Average number of cylinders swept per disk access(Device 1) = 2
+Average number of cylinders swept per disk access(Device 2) = 1
+Service time per I/O request(Device 0): 988
+Service time per I/O request(Device 1): 489
+Service time per I/O request(Device 2): 851
+
+
+Given the above statistics, we can see the double queue/STTF method is much more efficient since it has to swap across lesser tracks compared to FIFO and hence takes lesser time to service a I/O request.
