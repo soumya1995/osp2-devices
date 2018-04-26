@@ -40,9 +40,6 @@ public class Device extends IflDevice
         @OSPProject Devices
     */
 
-      private GenericQueueInterface insertQueue =  null;
-      private GenericQueueInterface removeQueue = null;
-      private boolean isFirstElement = true; //This would be for the first time the do_dequeue() is run
       private static int prevCylinder = 0;
 
 
@@ -50,12 +47,6 @@ public class Device extends IflDevice
     {
         super(id, numberOfBlocks);
         iorbQueue = new GenericList();
-
-        //Create the first queue append it to the list of queue
-        GenericQueueInterface queue = new GenericList();
-        (GenericList)iorbQueue.append(queue);
-        insertQueue = queue;
-        removeQueue = queue;
 
     }
 
@@ -91,7 +82,7 @@ public class Device extends IflDevice
     public int do_enqueueIORB(IORB iorb)
     {     
           //lock the page associated with the iorb
-          iorb.getPage().lock();
+          iorb.getPage().lock(iorb);
 
           //increment iorb count
           iorb.getOpenFile().incrementIORBCount();
@@ -101,9 +92,9 @@ public class Device extends IflDevice
           int pageBits = MMU.getPageAddressBits();
           int offsetBits = addBits - pageBits;
           int blockSize = (int)Math.pow(2,offsetBits); //Disk block size is equal to page size
-          int sectorsPerBlock = blockSize/this.getBytesPerSector();
-          int blocksPerTrack = this.getSectorsPerTrack()/sectorsPerBlock;
-          int tracksPerCylinder = this.getPlatters();
+          int sectorsPerBlock = blockSize/((Disk)this).getBytesPerSector();
+          int blocksPerTrack = ((Disk)this).getSectorsPerTrack()/sectorsPerBlock;
+          int tracksPerCylinder = ((Disk)this).getPlatters();
           int blockNumber = iorb.getBlockNumber();
           int cylinder = blockNumber/(blocksPerTrack*tracksPerCylinder);
 
@@ -120,7 +111,7 @@ public class Device extends IflDevice
                this.startIO(iorb);
           //Device is busy
           else
-               (GenericList)insertQueue.append(iorb);
+               ((GenericList)iorbQueue).append(iorb);
 
            return SUCCESS;
 
@@ -134,52 +125,28 @@ public class Device extends IflDevice
     */
     public IORB do_dequeueIORB()
     {
-        
-        IORB iorb = SSTF();
 
-        //Dequeuing for the first time
-        if(isFirstElement == true && iorb != null){
-
-          isFirstElement = false;
-          //Create a new queue append it to the list of queue
-          GenericQueueInterface queue = new GenericList();
-          (GenericList)iorbQueue.append(queue);
-          insertQueue = queue;   
-        }
-
-        //Dequeuing the element left in a list
-        if(iorb != null && removeQueue.isEmpty()){
-
-          iorbQueue.removeHead();
-          removeQueue = iorbQueue.getHead();
-          //Create a new queue append it to the list of queue
-          GenericQueueInterface queue = new GenericList();
-          (GenericList)iorbQueue.append(queue);
-          insertQueue = queue;   
-        }
-
-        return iorb;
-          
-    }
-
-    private IORB SSTF(){
-
-     if(removeQueue.isEmpty())
+        if(iorbQueue.isEmpty())
           return null;
 
-     IORB minIorb = (IORB)((GenericList)removeQueue).getHead();
-     Enumeration list = removeQueue.forwardIterator();
-     while(list.hasMoreElements()){
 
-          IORB iorb = (IORB)list.nextElement();
+        IORB iorb = null;
+        IORB minIorb = (IORB)((GenericList)iorbQueue).getHead();
+        Enumeration list = ((GenericList)iorbQueue).forwardIterator();
+        while(list.hasMoreElements()){
+
+          iorb = (IORB)list.nextElement();
           if(Math.abs(iorb.getCylinder()- prevCylinder) < Math.abs(minIorb.getCylinder()-prevCylinder))
                minIorb = iorb;    
-     }
+       }
 
      prevCylinder = minIorb.getCylinder();
-     return (IORB)removeQueue.remove(minIorb);
+     return (IORB)((GenericList)iorbQueue).remove(minIorb);
 
-    }
+          
+   }
+
+    
 
     /*
         Remove all IORBs that belong to the given ThreadCB from 
@@ -196,11 +163,10 @@ public class Device extends IflDevice
     */
     public void do_cancelPendingIO(ThreadCB thread)
     {
-        if(thread == null)
+        if(thread.getStatus() != ThreadKill)
           return;
 
-        if(!insertQueue.isEmpty()){
-          Enumeration list = insertQueue.forwardIterator();
+          Enumeration list = ((GenericList)iorbQueue).forwardIterator();
           while(list.hasMoreElements()){
 
                IORB iorb = (IORB)list.nextElement();
@@ -211,25 +177,9 @@ public class Device extends IflDevice
                     openFile.decrementIORBCount();
                     if(openFile.getIORBCount() == 0 && openFile.closePending)
                          openFile.close();
+                    ((GenericList)iorbQueue).remove(iorb);
                }
           }
-     }
-
-     if(!removeQueue.isEmpty()){
-          list = removeQueue.forwardIterator();
-          while(list.hasMoreElements()){
-
-               IORB iorb = (IORB)list.nextElement();
-               if(iorb.getThread().equals(thread)){
-
-                    iorb.getPage().unlock();
-                    OpenFile openFile = iorb.getOpenFile();
-                    openFile.decrementIORBCount();
-                    if(openFile.getIORBCount() == 0 && openFile.closePending == true)
-                         openFile.close();
-               }
-          }
-     }
 
     }
 

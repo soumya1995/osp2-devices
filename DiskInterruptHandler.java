@@ -62,7 +62,7 @@ public class DiskInterruptHandler extends IflDiskInterruptHandler
         pageTableEntry.unlock();
         
         if(iorb.getThread().getTask().getStatus()!=TaskTerm){
-            if(iorb.getDeviceID() != SwapDeviceID && iorb.getThread() != ThreadKill ){
+            if(iorb.getDeviceID() != SwapDeviceID && iorb.getThread().getStatus() != ThreadKill ){
 
                 frameTableEntry.setReferenced(true);
                 if(iorb.getIOType() == FileRead)
@@ -79,8 +79,9 @@ public class DiskInterruptHandler extends IflDiskInterruptHandler
         Device device = Device.get(iorb.getDeviceID());
         device.setBusy(false);
 
-        if(device.dequeueIORB() != null)
-            device.startIO(device);
+        IORB newIorb = device.dequeueIORB();
+        if(newIorb != null)
+            device.startIO(newIorb);
 
         ThreadCB.dispatch();
     }
